@@ -1,0 +1,228 @@
+---
+title: "PRA2"
+author: "Luis Villazón Esteban, Jose Javier Marti Camarasa"
+date: "12/21/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+if(!require(devtools)) install.packages("devtools")
+devtools::install_github("kassambara/ggcorrplot")
+library(dplyr)
+library(gmodels)
+library(ggcorrplot)
+library(caret)
+library(pROC)
+library(varhandle)
+```
+
+
+# Descripción del dataset. ¿Por qué es importante y qué pregunta/problema pretende responder?
+
+El dataset seleccionado contiene datos referentes a pacientes Indios que sufren de Hígado. El problema que se pretende responder con los datos facilitados es la clasificación de pacientes para saber si en función de sus múltiples atributos es un paciente que sufre de Hígado o no.
+Para ello el dataset nos ofrece 583 pacientes, de los cuales 416 se encuentran identificados como pacientes que sufren de Hígado y 167 como pacientes que no tienen problemas relacionados con el mismo.
+
+El dataset contiene los siguientes atributos:
+
+- **age**: Edad del paciente, todo aquel paciente cuya edad sea superior a 89 es marcado como 90.
+- **gender** Sexo del paciente.
+- **tot_bilirubin** Bilirubina Total.
+- **direct_bilirubin** Bilirubina en sangre.
+- **alkphos** Fosfatasa Alcalina(Niveles altos pueden indicar daño en el hígado).
+- **sgpt** Test Alamina aminotransferasa: Test sanguineo para comprobar si hay daño en hígado.
+- **sgot** Test Aspartato Aminotransferasa: Test sanguineo para comprobar si hay daño en hígado.
+- **tot_proteins** roteinas totales.
+- **albumin** Albumina.
+- **ag_ratio** A/G Ratio Albumina y Globulina (Grupo de proteinas solubles en sangre)
+- **is_patient** Selector usado para indicar si es paciente de higado. 1 significa si, 2 significa no.
+
+# Integración y selección de los datos de interés a analizar.
+
+En primer lugar realizamos la carga del dataset en R y transformamos la variable dependiente a tipo factor, transformando el valor 1 a "si_padece" y el valor 2 a "no_padece".
+
+```{r}
+ilpd_data <- read.csv("ilpd_data.csv",header = FALSE, col.names = c("edad","sexo","TB","DB","alk_phos","alamine","aspartate","TP","albumin","A/G","Padece" ), na="NA", stringsAsFactors = TRUE )
+
+ilpd_data <- ilpd_data%>% mutate(
+    Padece = as.factor(case_when(
+      Padece == "1"  ~ "si_padece",
+      Padece == "2" ~ "no_padece"
+           ))
+)
+
+```
+
+A continuación mostramos un resumen y una descripción de los valores del dataset.
+
+```{r}
+summary(ilpd_data)
+```
+
+
+```{r}
+str(ilpd_data)
+```
+
+Podemos comprobar como todos los valores son númericos continuos excepto las varibles **sexo** y **Padece** las cuales son categorícas y se han detectado correctamente.
+
+Dado que queremos conocer si un paciente padece o no de Hígado, vamos a comprobar cual es la correlación de la variable dependiente **Padece** con cada una de las variables independientes existentes en el Dataset.
+
+```{r}
+p <- as.data.frame(model.matrix(~Padece, ilpd_data))
+sexo <- as.data.frame(model.matrix(~sexo, ilpd_data))
+ilpd_data['p'] <- p$Padecesi_padece
+ilpd_data['s'] <- sexo$sexoMale
+cor(ilpd_data[, c('edad', 'p', 's', 'TB', 'DB', 'alk_phos', 'alamine', 'alamine', 'TP', 'albumin', 'A.G')])
+```
+
+
+
+
+# Limpieza de los datos.
+
+## 3.1. ¿Los datos contienen ceros o elementos vacíos? ¿Cómo gestionarías cada uno de estos casos?
+
+Según lo observado anteriormente con el uso del método **summary**, no tenemos ninguna variable con datos perdidos. 
+Para tener una visión más clara sobre ello podemos mostrar el número de elementos nulos que existe en cada variable.
+```{r}
+sort(colMeans(is.na(ilpd_data)), decreasing = TRUE)
+```
+
+Efectivamente no tenemos nigun variable con datos perdidos. La funcion colMeans,nos muestra qué proporción de datos no disponibles tenemos por columna.
+
+Disponemos por tanto de un data frame formado por 2 variables categóricas y 8 variables exceptuando la variable objetivo, sin valores nulos
+
+## 3.2. Identificación y tratamiento de valores extremos.
+
+Para identificar los valores extremos vamos a utilizar diagramas de cajas.
+
+```{r}
+library("ggplot2")
+
+ggplot(ilpd_data, aes(y=edad)) + geom_boxplot()
+ggplot(ilpd_data, aes(y=TB)) + geom_boxplot()
+ggplot(ilpd_data, aes(y=DB)) + geom_boxplot()
+ggplot(ilpd_data, aes(y=alk_phos)) + geom_boxplot()
+ggplot(ilpd_data, aes(y=alamine)) + geom_boxplot()
+ggplot(ilpd_data, aes(y=TP)) + geom_boxplot()
+ggplot(ilpd_data, aes(y=albumin)) + geom_boxplot()
+ggplot(ilpd_data, aes(y=A.G)) + geom_boxplot()
+```
+Se pueden adivinar posibles outliers o valores extremos. Con un conocimiento del dominio, se podría ver si son susceptibles de quitar o no. Para este análisis los dejaremos por desconocimiento de del dominio.
+
+
+# 4. Análisis de los datos.
+
+## 4.1. Selección de los grupos de datos que se quieren analizar/comparar (planificación de los análisis a aplicar).
+## 4.2. Comprobación de la normalidad y homogeneidad de la varianza.
+
+```{r}
+library(nortest)
+alpha = 0.05
+col.names = colnames(ilpd_data)
+for (i in 1:ncol(ilpd_data)) {
+if (i == 1) cat("Variables que no siguen una distribución normal:\n")
+if (is.integer(ilpd_data[,i]) | is.numeric(ilpd_data[,i])) {
+p_val = ad.test(ilpd_data[,i])$p.value
+if (p_val < alpha) {
+cat(col.names[i])
+# Format output
+if (i < ncol(ilpd_data) - 1) cat(", ")
+if (i %% 3 == 0) cat("\n")
+}
+}
+}
+```
+
+## 4.3. Aplicación de pruebas estadísticas para comparar los grupos de datos. En función de los datos y el objetivo del estudio, aplicar pruebas de contraste de hipótesis, correlaciones, regresiones, etc. Aplicar al menos tres métodos de análisis diferentes.
+
+### Método Regresión
+
+En este apartado vamos a realizar un modelo de regresión para comprobar si una persona en base a sus atributos tiene posibilidades de sufrir afección de hígado.
+Para realizar el modelo vamos a realizar una aproximación creciente, es decir, dado que el número de variables independientes o factores es comedido podemos ir añadiendo
+factores nuevos al modelo hasta alcanzar aquel que nos ofrezca un mejor resultado.
+Para medir cual de los modelos se adapta mejor a los datos utilizaremos el valor AIC, el cual a menor valor mejor se adapta el modelo.
+
+```{r}
+glm(Padece ~ edad, data=ilpd_data, family=binomial(link=logit))$aic
+glm(Padece ~ edad + TB, data=ilpd_data, family=binomial(link=logit))$aic
+glm(Padece ~ edad + TB + DB, data=ilpd_data, family=binomial(link=logit))$aic
+glm(Padece ~ edad + TB + DB + alk_phos, data=ilpd_data, family=binomial(link=logit))$aic
+glm(Padece ~ edad + TB + DB + alk_phos + alamine, data=ilpd_data, family=binomial(link=logit))$aic
+glm(Padece ~ edad + TB + DB + alk_phos + alamine + aspartate , data=ilpd_data, family=binomial(link=logit))$aic
+glm(Padece ~ edad + TB + DB + alk_phos + alamine + aspartate + TP, data=ilpd_data, family=binomial(link=logit))$aic
+glm(Padece ~ edad + TB + DB + alk_phos + alamine + aspartate + TP + albumin, data=ilpd_data, family=binomial(link=logit))$aic
+glm(Padece ~ edad + TB + DB + alk_phos + alamine + aspartate + TP + albumin + A.G, data=ilpd_data, family=binomial(link=logit))$aic
+```
+
+Como se puede observar el modelo que ofrece mejores resultados es aquel que tiene los factores **edad**,**TB**,**DB**, **alk_phos**, **alamine**, **aspartate**, **TP** y **albumin**.
+A continuación vamos a calcular un resumen del modelo para comprobar cuales son los coeficientes y el p-value de cada uno de los factores.
+
+```{r}
+model.logit <- glm(Padece ~ edad + TB + DB + alk_phos + alamine + aspartate + TP + albumin + A.G, data=ilpd_data, family=binomial(link=logit))
+summary(model.logit)
+```
+
+Observamos como los factores **TB**, **alk_pho**, **aspartate** y **A.G** tienen un p-value mayor a 0.05, por lo tanto son atributos no significativos y pueden ser eliminados del modelo.
+
+```{r}
+model.logit <- glm(Padece ~ edad + DB + alamine + TP + albumin, data=ilpd_data, family=binomial(link=logit))
+summary(model.logit)
+```
+
+Una vez eliminados los factores no significativos se observa como el valor de **AIC** ha disminuido a 591.46 por lo que lo podemos considerar como el mejor modelo que podemos obtener.
+
+Para comprobar el comportamiento del modelo vamos a relizar un test de bondad de ajuste. Debido a que las variables explicativas son continuas, vamos a utilizar el **Test de Hosmer-Lemeshow**.
+
+En este test se comparan los valores previstos por el modelo con los valores obtenidos, siendo la hipotesis nula la no existencia de diferencias entre los valores observados y los previstos.
+```{r}
+actual=as.data.frame(to.dummy(ilpd_data$Padece,"si_padece"))
+actual=actual$si_padece.si_padece
+hoslem.test(actual, fitted(model.logit))
+```
+
+Según el valor obtenido el p-value es de 0.81 el cual es superior a 0.05 por lo tanto no se rechaza la hipótesis nula y podemos asegurar con un 95% que los valores previstos se asemejan a los valores obtenidos.
+
+# Representación de los resultados a partir de tablas y gráficas.
+
+## Tablas y gráficas modelo regresión.
+
+### Odd-Ratio
+En este punto vamos a calcular cual es el odd-ratio de cada uno de los factores que utilizamos en el modelo de regresión para calcular si una persona puede sufrir afecciones de hígado.
+```{r}
+exp(coefficients(model.logit))
+```
+
+Según los datos obtenidos podemos deducir que:
+- La edad afecta a la afección positivamente, a mayor edad la probabilidad de sufrir de hígado aumenta. En este caso, por cada unidad que aumenta la edad, la probabilidad aumenta en un 1.8%.
+- El DB afecta a la afección positivamente, por cada unidad aumentada de DB la probabilidad aumenta en un 72%.
+- La alamina afecta a la afección positivamente, por cada unidad aumentada de alamina la probabilidad aumenta en un 1.5%.
+- La TP afecta a la afección positivamente, por cada unidad aumentada de TP la probabilidad aumenta en un 54%.
+- La albumina afecta a la afección negativamente, por cada unidad aumentada de albumina la probabilidad disminuye en un 51%.
+
+### Matriz de confusión
+```{r}
+predicciones <- factor(ifelse(test = model.logit$fitted.values > 0.5, yes="si_padece", no="no_padece"))
+caret::confusionMatrix(ilpd_data$Padece, predicciones, positive="si_padece")
+```
+
+Al observar la matriz de confusión observamos como la exactitud del modelo se encuentra en un 72.9%, Esto quiere decir que en un 72.9% el modelo acierta en su predicción.
+También podemos observar la sensibilidad del modelo, el número de veces que el modelo indica que si_padece y el valor real es si_padece_, el cual es de un 75%, por lo que el modelo es capaz de encontrar la mayoría de los casos en los cuales un paciente si sufre de afección de higado.
+Al observar la especificidad podemos ver como su valor es de un 56%, este valor indica el número de veces que el modelo indica que no se padece una afección cuando en verdad no se padece. En este caso el modelo predice el valor correcto únicamente en el 56% de los casos, dando un alto porcentaje de falsos negativos, lo cual a la hora de dar un diagnóstico es preocupante, ya que un 44% de los resultados negativos no serían realmente negativos sino que el paciente si estaría sufriendo de higado. 
+
+```{r}
+p <- predict(model.logit, ilpd_data[, c("edad","DB","alamine","TP","albumin" )], type="response")
+r <- roc(ilpd_data$Padece, p, data=ilpd_data)
+plot(r)
+```
+```{r}
+auc(r)
+```
+
+Dado que el area debajo de la curva es de un 0.75, podemos decir que el modelo discrimina de manera adecuada los datos, pero se encuentra lejos del valor
+0.8, a partir del cual se consideraría como una discriminación excelente.
+
+
+# 6. Resolución del problema. A partir de los resultados obtenidos, ¿cuáles son las conclusiones? ¿Los resultados permiten responder al problema?
+
