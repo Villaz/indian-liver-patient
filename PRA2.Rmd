@@ -15,6 +15,7 @@ library(ggcorrplot)
 library(caret)
 library(pROC)
 library(varhandle)
+library(ResourceSelection)
 ```
 
 
@@ -65,17 +66,6 @@ str(ilpd_data)
 ```
 
 Podemos comprobar como todos los valores son númericos continuos excepto las varibles **sexo** y **Padece** las cuales son categorícas y se han detectado correctamente.
-
-Dado que queremos conocer si un paciente padece o no de Hígado, vamos a comprobar cual es la correlación de la variable dependiente **Padece** con cada una de las variables independientes existentes en el Dataset.
-
-```{r}
-p <- as.data.frame(model.matrix(~Padece, ilpd_data))
-sexo <- as.data.frame(model.matrix(~sexo, ilpd_data))
-ilpd_data['p'] <- p$Padecesi_padece
-ilpd_data['s'] <- sexo$sexoMale
-cor(ilpd_data[, c('edad', 'p', 's', 'TB', 'DB', 'alk_phos', 'alamine', 'alamine', 'TP', 'albumin', 'A.G')])
-```
-
 
 
 
@@ -136,6 +126,71 @@ if (i %% 3 == 0) cat("\n")
 ```
 
 ## 4.3. Aplicación de pruebas estadísticas para comparar los grupos de datos. En función de los datos y el objetivo del estudio, aplicar pruebas de contraste de hipótesis, correlaciones, regresiones, etc. Aplicar al menos tres métodos de análisis diferentes.
+
+### Correlación
+Dado que queremos conocer si un paciente padece o no de Hígado, vamos a comprobar cual es la correlación de la variable dependiente **Padece** con cada una de las variables independientes existentes en el Dataset.
+
+```{r}
+p <- as.data.frame(model.matrix(~Padece, ilpd_data))
+sexo <- as.data.frame(model.matrix(~sexo, ilpd_data))
+ilpd_data['padece'] <- p$Padecesi_padece
+ilpd_data['hombre'] <- sexo$sexoMale
+corr <- cor(ilpd_data[, c('edad', 'padece', 'hombre', 'TB', 'DB', 'alk_phos', 'alamine', 'TP', 'albumin', 'A.G')])
+```
+
+```{r}
+ggcorrplot(corr, outline.col = "black", lab=TRUE)
+```
+Si nos fijamos en la correlación de las variables existentes con la variable dependiente de padecer enfermedad, podemos observar como no existe una fuerte correlación entre esta y el resto de las variables. Fijandonos en los valores de correlación podemos extraer la siguiente información:
+
+- La edad influye muy levemente en la posibilidad de padecer, a medida que aumenta la edad, existe un ligero aumento en la posibilidad de padecer de Hígado.
+- El ser hombre o mujer no tiene prácticamente correlación con la variable, ocurre lo mismo con la variable TP.
+- Las variables TB y DB son las que tienen una mayor correlación directa con padecer, a medida que aumentan estas variables puede ser posible que aumenten los casos de paceder de Hígado.
+- Por el contrario las variables de albumina y AG tienen una correlación inversa, a medida que estas tienen un valor mayor, el número de casos que padecen de Hígado disminuyen.
+
+Adicionalmente podemos observar como las variables TB y DB se encuentran fuertemente relacionadas entre si, así como las variables de albumina con TP y albumina con AG.
+
+Al mostrar un gráfico de coordenadas, se puede ver como en estas relaciones, existe una tendencia de los valores a mantenerse en la diagonal, lo que nos hace indicar que existe una relación entre las mismas.
+
+```{r}
+plot(ilpd_data$TB, ilpd_data$DB)
+plot(ilpd_data$albumin, ilpd_data$TP)
+plot(ilpd_data$albumin, ilpd_data$A.G)
+```
+
+### Contraste de hipótesis.
+
+En este apartado vamos a responder a la pregunta de si las personas de menos de 40 años tienen la alumina superior a las personas de más de 40 años. 
+
+Para ello en primer lugar escribimos la hipótesis nula y alternativa.
+$$
+H_0: \mu_{menos40} = \mu_{mas40}
+\\
+H_1: \mu_{menos40} > \mu_{mas40}
+$$
+Podemos comprobar gráficamente como se distribuye la albumina según el intervalo indicado. A primera vista puede parece que a niveles más altos de albumina se tiene menos edad. 
+
+```{r}
+ilpd_data['menos_40'] <- ilpd_data$edad < 40
+ggplot(ilpd_data,aes(x=albumin,col=menos_40)) + geom_density()
+```
+
+Para conocer que test debemos aplicar en primer lugar debemos comprobar si la variable **alumina** sigue una distribución normal, dado que el número de elementos existentes en la muestra es de 583, por el teorema del límite central podemos suponer que así es.
+
+Además hemos de comprobar si la varianza de ambas medidas es diferente
+```{r}
+var.test( ilpd_data$albumin[ilpd_data$edad < 40], ilpd_data$albumin[ilpd_data$edad >= 40] )
+```
+
+Observando el p-value se observa como es superior a 0.05, por lo tanto descartamos igualdad de varianzas en las dos poblaciones.
+
+En consecuencia, aplicamos un test de dos muestras independientes sobre la media con varianza desconocida y diferente. Es un test unilateral por la derecha.
+
+```{r}
+t.test( ilpd_data$albumin[ilpd_data$edad < 40], ilpd_data$albumin[ilpd_data$edad >= 40], var.equal=FALSE, alternative = "greater")
+```
+
+El valor de p es 1.721e-09, el cual es muy inferior a 0.05, por lo tanto se rechaza la hipótesis nula y podemos concluir que el nivel de albumina es superior en los pacientes que tienen menos de 40 años.
 
 ### Método Regresión
 
