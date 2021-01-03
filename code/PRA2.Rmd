@@ -1,11 +1,11 @@
 ---
 title: "PRA2"
-author: "Luis Villazón Esteban, Jose Javier Marti Camarasa"
+author: "Luis Villazón Esteban (LVE), Jose Javier Marti Camarasa (JJMC)"
 date: "05/01/2021"
 output:
-  pdf_document: default
   html_document:
     df_print: paged
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -22,7 +22,7 @@ library(ResourceSelection)
 ```
 
 # Enlace GitHub :
- ## [Practica 2] https://github.com/Villaz/indian-liver-patient
+## [Practica 2] https://github.com/Villaz/indian-liver-patient
 
 # 1. Descripción del dataset. ¿Por qué es importante y qué pregunta/problema pretende responder?
 
@@ -439,3 +439,11 @@ Dado que el area debajo de la curva es de un 0.75, podemos decir que el modelo d
 
 # 6. Resolución del problema. A partir de los resultados obtenidos, ¿cuáles son las conclusiones? ¿Los resultados permiten responder al problema?
 
+# 7. Contribución al Documento
+    
+
+| Contribuciones| Firma|
+| -- | -- | 
+| Investigación previa| JJMC, LVE  | 
+| Redacción de respuestas| JJMC, LVE | 
+| Desarrollo de código| JJMC, LVE | 
