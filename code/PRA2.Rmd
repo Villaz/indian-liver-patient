@@ -1,8 +1,9 @@
 ---
 title: "PRA2"
 author: "Luis Villazón Esteban, Jose Javier Marti Camarasa"
-date: "12/21/2020"
+date: "05/01/2021"
 output:
+  pdf_document: default
   html_document:
     df_print: paged
 ---
@@ -20,8 +21,10 @@ library(varhandle)
 library(ResourceSelection)
 ```
 
+# Enlace GitHub :
+ ## [Practica 2] https://github.com/Villaz/indian-liver-patient
 
-# Descripción del dataset. ¿Por qué es importante y qué pregunta/problema pretende responder?
+# 1. Descripción del dataset. ¿Por qué es importante y qué pregunta/problema pretende responder?
 
 El dataset seleccionado contiene datos referentes a pacientes Indios que sufren de Hígado. El problema que se pretende responder con los datos facilitados es la clasificación de pacientes para saber si en función de sus múltiples atributos es un paciente que sufre de Hígado o no.
 Para ello el dataset nos ofrece 583 pacientes, de los cuales 416 se encuentran identificados como pacientes que sufren de Hígado y 167 como pacientes que no tienen problemas relacionados con el mismo.
@@ -40,7 +43,7 @@ El dataset contiene los siguientes atributos:
 - **ag_ratio** A/G Ratio Albumina y Globulina (Grupo de proteinas solubles en sangre)
 - **is_patient** Selector usado para indicar si es paciente de higado. 1 significa si, 2 significa no.
 
-# Integración y selección de los datos de interés a analizar.
+# 2. Integración y selección de los datos de interés a analizar.
 
 En primer lugar realizamos la carga del dataset en R y transformamos la variable dependiente a tipo factor, transformando el valor 1 a "si_padece" y el valor 2 a "no_padece".
 
@@ -71,7 +74,7 @@ Podemos comprobar como todos los valores son númericos continuos excepto las va
 
 
 
-# Limpieza de los datos.
+# 3. Limpieza de los datos.
 
 ## 3.1. ¿Los datos contienen ceros o elementos vacíos? ¿Cómo gestionarías cada uno de estos casos?
 
@@ -394,7 +397,7 @@ hoslem.test(actual, fitted(model.logit))
 
 Según el valor obtenido el p-value es de 0.81 el cual es superior a 0.05 por lo tanto no se rechaza la hipótesis nula y podemos asegurar con un 95% que los valores previstos se asemejan a los valores obtenidos.
 
-# Representación de los resultados a partir de tablas y gráficas.
+# 5. Representación de los resultados a partir de tablas y gráficas.
 
 ## Tablas y gráficas modelo regresión.
 

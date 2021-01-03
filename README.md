@@ -1,7 +1,7 @@
 # India Liver Patient
 Practica 2 Asignatura Tipología y ciclo de vida de los datos
 
-Autores: 
+**Autores**:
 Luis Villazón Esteban (lvillazon@uoc.edu), Jose Javier Marti Camarasa (jomarca1@uoc.edu)
 
 Acerca de este software
