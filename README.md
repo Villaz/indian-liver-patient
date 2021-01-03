@@ -18,9 +18,9 @@ https://www.kaggle.com/uciml/indian-liver-patient-records/home
 Licencia
 El contenido de este proyecto esta licencia bajo la Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International, y el código fuente usadao para mostrar este contenido esta licenciado bajo la MIT license.
 
-# Descripcion de la Practica a realizar
+## Descripcion de la Practica a realizar
 
-## El objetivo de esta actividad sera el tratamiento de un dataset, que puede ser el creado en la práctica 1 o cualquier dataset libre disponible en Kaggle (https://www.kaggle.com). Las diferentes tareas a realizar (y justificar) son las siguientes:
+### El objetivo de esta actividad sera el tratamiento de un dataset, que puede ser el creado en la práctica 1 o cualquier dataset libre disponible en Kaggle (https://www.kaggle.com). Las diferentes tareas a realizar (y justificar) son las siguientes:
 
    1. Descripción del dataset. ¿Por qué es importante y qué pregunta/problema pretende responder?
    2. Integración y selección de los datos de interés a analizar.
