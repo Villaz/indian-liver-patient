@@ -3,15 +3,12 @@ title: "PRA2"
 author: "Luis Villazón Esteban (LVE), Jose Javier Marti Camarasa (JJMC)"
 date: "05/01/2021"
 output:
+  pdf_document: default
   html_document:
     df_print: paged
-  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
-#sexoknitr::opts_chunk$set(echo = TRUE)
-#if(!require(devtools)) install.packages("devtools")
-#devtools::install_github("kassambara/ggcorrplot")
 library(dplyr)
 library(gmodels)
 library(ggcorrplot)
@@ -107,8 +104,9 @@ ggplot(ilpd_data, aes(y=A.G)) + geom_boxplot()
 Se pueden adivinar posibles outliers o valores extremos. Con un conocimiento del dominio, se podría ver si son susceptibles de quitar o no. Para este análisis los dejaremos por desconocimiento de del dominio.
 
 Una vez realizada la conversión y limpieza de los datos guardamos el fichero sobre el cual se efectuarán los siguientes puntos.
+
 ```{r}
-write.csv("../data/clean_ilpd_data.csv",header = TRUE)
+write.csv2(ilpd_data, "../data/clean_ilpd_data.csv", row.names=FALSE)
 ```
 
 
