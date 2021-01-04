@@ -439,6 +439,16 @@ Dado que el area debajo de la curva es de un 0.75, podemos decir que el modelo d
 
 # 6. Resolución del problema. A partir de los resultados obtenidos, ¿cuáles son las conclusiones? ¿Los resultados permiten responder al problema?
 
+A la vista de los resultados obtenidos a lo largo del documento podemos extraer las siguientes conclusiones:
+
+- La **edad** y el **sexo** no son unos atributos importantes para la detección de un problema de hígado. Aún así al observar los **odd-values** del modelo de regresión realizado, se comprueba como el valor de edad es de 1.01, esto puede dar lugar a dos interpretaciones: La edad es totalmente independiente de la probabilidad de padecer la enfermedad o la probabilidad aumenta muy levemente a medida que la edad aumenta. Además se ha comprobado mediante un **contraste de hipótesis** que la edad no es un factor a tener en cuenta para comprobar la enfermedad ya que no existen evidencias suficientes para suponer que un aumento de edad aumente el factor de riesgo.
+- Si queremos conocer cuales son los atributos que más probabilidades nos dan de saber si un paciente subre de un problema de hígado nos debemos de fijar en aquellos que tengan los niveles más altos de **DB** y **TP**, a niveles más altos de estos valores mayor es la probabilidad de sufrir un problema de hígado. También tiene sentido que ambos valores afecten a la probabilidad ya que ambos se encuentran relacionados.
+- Los valores altos de **albumina** disminuyen la probabilidad de paceder, por lo tanto si nos interesa conocer si un paciente no pacede, deberíamos buscar aquellos pacientes con alta albumina y baja **DB** y **TP**. Igualmente la albumina se encuentra fuertemente relacionada con los atributos  **AG **y **TB**, por lo que la observación de ambos también podría ser interesante para comprobar el padecimiento del paciente.
+
+- Al generar un modelo de regresión se han descubierto que las variables independientes con mayor significancia son edad, **DB**, **alamine**, **TP** y **albumina.** Con dicho modelo se alcanza una exactitud del 73%, teniendo una exactitud del 75%, la cual se puede considerar como bastante alta. Aún así el valor de especificidad es del 56% por lo que la mayoría de los negativos no se consideran como tal, por lo tanto habría que refinar el modelo con el fin de aumentar dicho porcentaje.
+
+En base a estas conclusiones podemos concluir con que se ha respondido al problema que se planteaba en un principio, **clasificación de pacientes para saber si sufre de Hígado**. Se ha realizado un modelo de regresión para realizar la clasificación, consiguiendo un 73% de exactitud, y se han identificado cuales son los parámetros más influyentes a la hora de clasificar a los pacientes según su patología.
+
 # 7. Contribución al Documento
     
 
